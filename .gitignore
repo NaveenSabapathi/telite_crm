@@ -1,0 +1,17 @@
+.env
+.env.*
+!.env.example
+*.jks
+*.keystore
+*.pem
+*.key
+google-services.json
+service-account*.json
+__pycache__/
+.pytest_cache/
+.venv/
+node_modules/
+dist/
+build/
+*.aab
+*.apk
