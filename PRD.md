@@ -1,6 +1,6 @@
 # Telite CRM — Product requirements
 
-**Status:** Phase 1 proposed baseline, 14 November 2026. No application code implemented. Phase 2 starts only after owner confirmation.
+**Status:** Phase 1 product baseline; Phase 2 was authorized and implemented on 14 November 2026. See [Phase 2 setup](docs/PHASE2_SETUP.md) for implemented scope and [validation](docs/VALIDATION.md) for test evidence. Later-phase requirements remain planned.
 
 ## Product outcome
 

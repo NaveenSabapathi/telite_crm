@@ -1,7 +1,9 @@
 # Telite CRM — Architecture
 
-**Phase 1 design baseline · 14 November 2026 · Awaiting approval for Phase 2.**
-Repository inspection: `NaveenSabapathi/telite_crm` was empty. This package specifies a greenfield system. It contains reference SQL and documentation, not a running application or a production-readiness certification.
+**Phase 1 design baseline · 14 November 2026 · Phase 2 implementation authorized.**
+**Implementation update:** Phase 2 is now implemented; see [Phase 2 setup](docs/PHASE2_SETUP.md) and [validation](docs/VALIDATION.md) for actual scope and tested behavior. This document remains the full target design.
+
+Repository inspection: `NaveenSabapathi/telite_crm` was empty. The original Phase 1 package specified a greenfield system. The implementation now includes the Phase 2 backend and portal; neither phase is a production-readiness certification.
 
 ## 1. Decisions
 

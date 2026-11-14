@@ -1,0 +1,90 @@
+name: Phase 2 verification
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: isolated-ci-only
+          POSTGRES_DB: telite_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres -d telite_test"
+          --health-interval 5s --health-timeout 3s --health-retries 20
+    env:
+      APP_ENV: test
+      MIGRATION_DATABASE_URL: postgresql+psycopg://postgres:isolated-ci-only@localhost:5432/telite_test
+      PUBLIC_WEB_URL: http://testserver
+      COOKIE_SECURE: "false"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/requirements.lock
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install backend
+        run: pip install -r backend/requirements.lock
+      - name: Generate isolated test configuration
+        run: |
+          python - <<'PY'
+          import base64, os, secrets
+          from pathlib import Path
+          env = {'JWT_SECRET':secrets.token_urlsafe(64),'PLATFORM_JWT_SECRET':secrets.token_urlsafe(64),'FIELD_ENCRYPTION_KEY':base64.urlsafe_b64encode(os.urandom(32)).decode()}
+          for key in ['API_DB_PASSWORD','CONTROL_DB_PASSWORD','MAIL_DB_PASSWORD']:
+              env[key]=secrets.token_urlsafe(36)
+          for key,role,pw in [('DATABASE_URL','crm_api','API_DB_PASSWORD'),('CONTROL_DATABASE_URL','crm_control','CONTROL_DB_PASSWORD'),('MAIL_DATABASE_URL','crm_mail','MAIL_DB_PASSWORD')]:
+              env[key]=f'postgresql+psycopg://{role}:{env[pw]}@localhost:5432/telite_test'
+          with Path(os.environ['GITHUB_ENV']).open('a') as f:
+              f.write('\n'.join(f'{k}={v}' for k,v in env.items())+'\n')
+          PY
+      - name: Lint, migrate and test real PostgreSQL roles
+        working-directory: backend
+        run: |
+          ruff check .
+          ruff format --check .
+          alembic upgrade head
+          python -m app.provision roles
+          pytest -q --junitxml=test-results.xml
+      - name: Frontend production build
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run build
+      - name: Browser integration
+        env:
+          PUBLIC_WEB_URL: http://localhost:5173
+        run: |
+          cd frontend
+          npx playwright install --with-deps chromium
+          cd ../backend
+          uvicorn app.api:app --host 127.0.0.1 --port 8000 > /tmp/tenant-api.log 2>&1 &
+          uvicorn app.control_api:app --host 127.0.0.1 --port 8001 > /tmp/control-api.log 2>&1 &
+          cd ../frontend
+          npm run dev -- --host 127.0.0.1 --port 5173 > /tmp/portal.log 2>&1 &
+          python - <<'PY'
+          import time, urllib.request
+          for port,path in [(8000,'/health/live'),(8001,'/health/live'),(5173,'/')]:
+              for attempt in range(80):
+                  try:
+                      urllib.request.urlopen(f'http://127.0.0.1:{port}{path}',timeout=1).read()
+                      break
+                  except Exception:
+                      time.sleep(.25)
+              else:
+                  raise RuntimeError(f'Service not ready: {port}')
+          PY
+          npm run test:e2e

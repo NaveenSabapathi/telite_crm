@@ -15,3 +15,10 @@ dist/
 build/
 *.aab
 *.apk
+
+.ruff_cache/
+*.tsbuildinfo
+coverage.xml
+htmlcov/
+playwright-report/
+test-results/
