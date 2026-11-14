@@ -14,7 +14,7 @@ SMTP tests use a captured sender function and synthetic accounts. No external ma
 
 ## Browser and deployment verification
 
-A Playwright integration workflow covers platform MFA login, company provisioning, feature changes, responsive viewport checks, accepting an admin invitation, company login, employee invitations and audit activity. Local browser launch was blocked by the workspace's Chromium Unix-socket restrictions; the test did not execute here. The CI workflow includes a normal Chromium installation and browser run on GitHub. Consult the actual workflow result before treating browser behavior as verified.
+A Playwright integration workflow covers platform MFA login, company provisioning, feature changes, responsive viewport checks, accepting an admin invitation, company login, employee invitations and audit activity. Local browser launch was blocked by the workspace's Chromium Unix-socket restrictions. The same test subsequently **passed on GitHub Actions**, including desktop/mobile viewport checks. [Successful verification run](https://github.com/NaveenSabapathi/telite_crm/actions/runs/43601188661) on implementation commit `babc97674cf1d5ffe0c1911af9aa70baa1b96332`: 24 PostgreSQL integration tests, frontend production build, and 1 complete browser workflow passed. The following documentation-only update records that evidence.
 
 Docker was unavailable in the authoring workspace, so the Compose image build/start was not executed locally. The APIs, SQL migrations, role provisioning and frontend build were exercised directly. TLS, real SMTP deliverability, Android builds, load targets, backup/restore drills and all Phase 3–5 business workflows remain unverified/unimplemented.
 

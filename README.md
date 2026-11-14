@@ -28,6 +28,10 @@ The bootstrap command prompts for a password and authenticator enrollment. No de
 - Transactional company creation and invitation delivery; idempotent company creation, versioned edits, atomic employee quotas and last-admin protection.
 - Server feature guards, suspension/session revocation, redacted audit, encrypted recovery-link outbox and bounded mail retries.
 
+## Verification
+
+24 real-PostgreSQL integration tests and the complete Playwright administration workflow passed on [GitHub Actions](https://github.com/NaveenSabapathi/telite_crm/actions/runs/43601188661). Python lint/format and the production frontend build also passed. Docker/Compose execution, real SMTP delivery and production deployment remain unverified; see [validation details](docs/VALIDATION.md).
+
 ## Project layout
 
 | Path | Purpose |
