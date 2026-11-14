@@ -1,0 +1,15 @@
+fastapi
+uvicorn
+sqlalchemy
+psycopg[binary]
+alembic
+argon2-cffi
+PyJWT
+cryptography
+pyotp
+email-validator
+pydantic-settings
+# Verification dependencies are pinned together in requirements.lock.
+pytest
+httpx
+ruff

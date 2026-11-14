@@ -1,0 +1,79 @@
+x-app-env: &app-env
+  APP_ENV: ${APP_ENV:-development}
+  PUBLIC_WEB_URL: ${PUBLIC_WEB_URL:-http://localhost:8080}
+  ALLOWED_HOSTS: ${ALLOWED_HOSTS:-localhost,127.0.0.1}
+  COOKIE_SECURE: ${COOKIE_SECURE:-false}
+  FIELD_ENCRYPTION_KEY: ${FIELD_ENCRYPTION_KEY:?Set a Fernet key}
+  SMTP_HOST: ${SMTP_HOST:-mailpit}
+  SMTP_PORT: ${SMTP_PORT:-1025}
+  SMTP_STARTTLS: ${SMTP_STARTTLS:-false}
+  SMTP_FROM_ADDRESS: ${SMTP_FROM_ADDRESS:-noreply@example.com}
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: telite
+      POSTGRES_USER: migrator
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set migration DB password}
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U migrator -d telite"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+  migrate:
+    build: {context: ., dockerfile: infra/backend.Dockerfile}
+    environment:
+      <<: *app-env
+      DATABASE_URL: postgresql+psycopg://crm_api:${API_DB_PASSWORD:?Set API DB password}@db:5432/telite
+      MIGRATION_DATABASE_URL: postgresql+psycopg://migrator:${POSTGRES_PASSWORD}@db:5432/telite
+      API_DB_PASSWORD: ${API_DB_PASSWORD}
+      CONTROL_DB_PASSWORD: ${CONTROL_DB_PASSWORD:?Set control DB password}
+      MAIL_DB_PASSWORD: ${MAIL_DB_PASSWORD:?Set mail DB password}
+    command: [sh, -c, "alembic upgrade head && python -m app.provision roles"]
+    depends_on:
+      db: {condition: service_healthy}
+  api:
+    build: {context: ., dockerfile: infra/backend.Dockerfile}
+    environment:
+      <<: *app-env
+      DATABASE_URL: postgresql+psycopg://crm_api:${API_DB_PASSWORD}@db:5432/telite
+      JWT_SECRET: ${JWT_SECRET:?Set a random tenant signing secret}
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+    restart: unless-stopped
+  control:
+    build: {context: ., dockerfile: infra/backend.Dockerfile}
+    environment:
+      <<: *app-env
+      DATABASE_URL: postgresql+psycopg://crm_control:${CONTROL_DB_PASSWORD}@db:5432/telite
+      CONTROL_DATABASE_URL: postgresql+psycopg://crm_control:${CONTROL_DB_PASSWORD}@db:5432/telite
+      PLATFORM_JWT_SECRET: ${PLATFORM_JWT_SECRET:?Set an independent platform signing secret}
+    command: [uvicorn, "app.control_api:app", --host, "0.0.0.0", --port, "8000", --proxy-headers, "--forwarded-allow-ips=*"]
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+    restart: unless-stopped
+  auth-mail:
+    build: {context: ., dockerfile: infra/backend.Dockerfile}
+    environment:
+      <<: *app-env
+      DATABASE_URL: postgresql+psycopg://crm_mail:${MAIL_DB_PASSWORD}@db:5432/telite
+      SMTP_USERNAME: ${SMTP_USERNAME:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      MAIL_DATABASE_URL: postgresql+psycopg://crm_mail:${MAIL_DB_PASSWORD}@db:5432/telite
+    command: [python, -m, app.mail_worker]
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+    restart: unless-stopped
+  web:
+    build: {context: ., dockerfile: infra/frontend.Dockerfile}
+    ports: ["127.0.0.1:8080:8080"]
+    depends_on: [api, control]
+    restart: unless-stopped
+  mailpit:
+    image: axllent/mailpit:v1.27
+    profiles: [dev-mail]
+    ports: ["127.0.0.1:8025:8025"]
+volumes:
+  pgdata:
