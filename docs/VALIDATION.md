@@ -6,9 +6,9 @@ Updated 15 November 2026. The Phase 2 evidence below is preserved; continuation 
 
 - Mandatory onboarding completed at base commit `0a33fda`; all 24 unchanged backend tests passed before code changes.
 - Applied migration `0003_phase3_operations` on PostgreSQL 17.11; provisioned the separate restricted operations role.
-- The original 24 tests and the initial 14 new tests passed together (38 total). The expanded 17-test operational suite also passed, including scheduled reports, inbox deduplication, payment reconciliation and cross-tenant operations-role checks.
+- All 41 PostgreSQL integration tests passed together: 24 unchanged Phase 2 tests and 17 operations tests, including scheduled reports, inbox deduplication, payment reconciliation and cross-tenant operations-role checks.
 - Python lint/format and React/TypeScript production build passed.
-- Browser suites are being verified through the repository CI; local Chromium launch is blocked by Unix-socket restrictions in the authoring environment.
+- All 3 Playwright workflows passed: unchanged platform/admin coverage, employee attendance/disclosure/signature ticket closure, and company report download/CRM conversion. [Successful CI run](https://github.com/titankustoms/telite_crm/actions/runs/43685109625) validates implementation commit `82828659164ee8f791ae3f08f774aedf905606bf`, including all 41 backend tests, lint, migration and production build. Local Chromium launch is blocked by Unix-socket restrictions in the authoring environment.
 - No external SMTP email, deployment, Android release build or Play publication was performed. Signature acceptance is implemented; SMS OTP is not configured. Read [implementation limits](PHASE3_4_API.md).
 
 ## Historical Phase 2 validation
