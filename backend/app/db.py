@@ -56,7 +56,9 @@ def scope_write(session, *_):
 @lru_cache
 def engine(kind="tenant"):
     cfg = settings()
-    url = cfg.database_url if kind == "tenant" else cfg.control_database_url
+    url = {"tenant": cfg.database_url, "control": cfg.control_database_url, "operations": cfg.operations_database_url}[
+        kind
+    ]
     if not url:
         raise RuntimeError("Control database URL is not configured")
     return create_engine(url, pool_pre_ping=True, pool_size=5, max_overflow=5)

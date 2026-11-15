@@ -19,6 +19,7 @@ def roles():
             ("crm_api", "API_DB_PASSWORD"),
             ("crm_control", "CONTROL_DB_PASSWORD"),
             ("crm_mail", "MAIL_DB_PASSWORD"),
+            ("crm_operations", "OPERATIONS_DB_PASSWORD"),
         ]:
             password = os.environ[variable]
             if len(password) < 24:
@@ -55,7 +56,22 @@ def roles():
         conn.execute("GRANT EXECUTE ON FUNCTION app.current_tenant(),app.protect_row() TO crm_mail")
         conn.execute("GRANT SELECT,UPDATE ON app.outbox TO crm_mail")
         conn.execute("GRANT SELECT ON app.users,app.password_tokens TO crm_mail")
-    print("Runtime roles provisioned with explicit grants; no business-module privileges granted.")
+        conn.execute("GRANT USAGE ON SCHEMA app,control TO crm_operations")
+        conn.execute(
+            "GRANT EXECUTE ON FUNCTION app.current_tenant(),app.protect_row(),control.tenant_state(),control.operations_settings(),control.reserve_evidence(bigint) TO crm_operations"
+        )
+        conn.execute("GRANT SELECT ON control.tenant_features TO crm_operations")
+        conn.execute("GRANT SELECT ON app.users,app.auth_sessions,app.holidays TO crm_operations")
+        conn.execute("GRANT UPDATE(branch_id,shift_id) ON app.users TO crm_operations")
+        conn.execute("GRANT UPDATE(revoked_at) ON app.auth_sessions TO crm_operations")
+        conn.execute(
+            "GRANT SELECT,INSERT,UPDATE ON app.branches,app.shifts,app.devices,app.consents,app.attendance,app.leave_requests,app.customers,app.sites,app.assets,app.tickets,app.leads,app.idempotency_keys,app.document_sequences,app.payments,app.report_runs,app.report_preferences,app.deletion_requests,app.notifications TO crm_operations"
+        )
+        conn.execute(
+            "GRANT SELECT,INSERT ON app.location_events,app.travel_segments,app.ticket_events,app.lead_activities,app.media,app.ticket_media,app.customer_acceptances,app.audit_logs TO crm_operations"
+        )
+        conn.execute("GRANT INSERT ON app.outbox TO crm_operations")
+    print("Runtime roles provisioned; Phase 2 and operations privileges remain separate.")
 
 
 def admin(email):

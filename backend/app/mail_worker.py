@@ -111,6 +111,11 @@ if __name__ == "__main__":
     mail_engine = create_engine(os.environ["MAIL_DATABASE_URL"], pool_pre_ping=True)
     while True:
         tick(mail_engine)
+        if settings().operations_database_url:
+            from .db import engine
+            from .operations_worker import tick_operations
+
+            tick_operations(mail_engine, engine("operations"))
         if args.once:
             break
         time.sleep(10)

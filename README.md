@@ -2,7 +2,11 @@
 
 Multi-tenant hardware sales and field-service SaaS: employee workspace, company administration and platform control plane.
 
-**Phase 2 implemented:** FastAPI backend, PostgreSQL tenant isolation, authentication, MFA-protected super-admin portal, company provisioning, feature/plan controls, administrator recovery and employee access management. Attendance, tickets, CRM workflows, reports and Android packaging remain later phases.
+**Phase 2 foundation:** FastAPI backend, PostgreSQL tenant isolation, authentication, MFA-protected super-admin portal, company provisioning, feature/plan controls, administrator recovery and employee access management. Tenant operations now add GPS attendance, assigned service workflows, signature closure, CRM, monthly report snapshots and responsive role views. See [implementation and limits](docs/PHASE3_4_API.md). Android packaging and production release gates remain open.
+
+## Continuation validation
+
+The continuation preserves the original 24 PostgreSQL tests and adds operational integration and browser tests. See [validation](docs/VALIDATION.md) for the exact executed checks. New deployments require an independent operations database credential; upgrade steps and route contracts are in [Phase 3–4 implementation](docs/PHASE3_4_API.md).
 
 ## Start locally
 

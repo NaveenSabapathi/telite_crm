@@ -28,6 +28,7 @@ services:
       <<: *app-env
       DATABASE_URL: postgresql+psycopg://crm_api:${API_DB_PASSWORD:?Set API DB password}@db:5432/telite
       MIGRATION_DATABASE_URL: postgresql+psycopg://migrator:${POSTGRES_PASSWORD}@db:5432/telite
+      OPERATIONS_DB_PASSWORD: ${OPERATIONS_DB_PASSWORD:?Set operations DB password}
       API_DB_PASSWORD: ${API_DB_PASSWORD}
       CONTROL_DB_PASSWORD: ${CONTROL_DB_PASSWORD:?Set control DB password}
       MAIL_DB_PASSWORD: ${MAIL_DB_PASSWORD:?Set mail DB password}
@@ -39,6 +40,7 @@ services:
     environment:
       <<: *app-env
       DATABASE_URL: postgresql+psycopg://crm_api:${API_DB_PASSWORD}@db:5432/telite
+      OPERATIONS_DATABASE_URL: postgresql+psycopg://crm_operations:${OPERATIONS_DB_PASSWORD}@db:5432/telite
       JWT_SECRET: ${JWT_SECRET:?Set a random tenant signing secret}
     depends_on:
       migrate: {condition: service_completed_successfully}
@@ -61,6 +63,7 @@ services:
       DATABASE_URL: postgresql+psycopg://crm_mail:${MAIL_DB_PASSWORD}@db:5432/telite
       SMTP_USERNAME: ${SMTP_USERNAME:-}
       SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      OPERATIONS_DATABASE_URL: postgresql+psycopg://crm_operations:${OPERATIONS_DB_PASSWORD}@db:5432/telite
       MAIL_DATABASE_URL: postgresql+psycopg://crm_mail:${MAIL_DB_PASSWORD}@db:5432/telite
     command: [python, -m, app.mail_worker]
     depends_on:
