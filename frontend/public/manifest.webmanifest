@@ -1,0 +1,19 @@
+{
+  "id": "/",
+  "name": "Telite CRM",
+  "short_name": "Telite",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f2f5f5",
+  "theme_color": "#122f3a",
+  "description": "Company attendance, field service and sales workspace",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

@@ -1,4 +1,4 @@
-name: Phase 2 verification
+name: CRM verification
 on:
   push:
   pull_request:
@@ -44,10 +44,12 @@ jobs:
           import base64, os, secrets
           from pathlib import Path
           env = {'JWT_SECRET':secrets.token_urlsafe(64),'PLATFORM_JWT_SECRET':secrets.token_urlsafe(64),'FIELD_ENCRYPTION_KEY':base64.urlsafe_b64encode(os.urandom(32)).decode()}
-          for key in ['API_DB_PASSWORD','CONTROL_DB_PASSWORD','MAIL_DB_PASSWORD']:
+          for key in ['API_DB_PASSWORD','CONTROL_DB_PASSWORD','MAIL_DB_PASSWORD','OPERATIONS_DB_PASSWORD']:
               env[key]=secrets.token_urlsafe(36)
-          for key,role,pw in [('DATABASE_URL','crm_api','API_DB_PASSWORD'),('CONTROL_DATABASE_URL','crm_control','CONTROL_DB_PASSWORD'),('MAIL_DATABASE_URL','crm_mail','MAIL_DB_PASSWORD')]:
+          for key,role,pw in [('DATABASE_URL','crm_api','API_DB_PASSWORD'),('CONTROL_DATABASE_URL','crm_control','CONTROL_DB_PASSWORD'),('MAIL_DATABASE_URL','crm_mail','MAIL_DB_PASSWORD'),('OPERATIONS_DATABASE_URL','crm_operations','OPERATIONS_DB_PASSWORD')]:
               env[key]=f'postgresql+psycopg://{role}:{env[pw]}@localhost:5432/telite_test'
+          for value in env.values():
+              print(f'::add-mask::{value}')
           with Path(os.environ['GITHUB_ENV']).open('a') as f:
               f.write('\n'.join(f'{k}={v}' for k,v in env.items())+'\n')
           PY
@@ -88,3 +90,13 @@ jobs:
                   raise RuntimeError(f'Service not ready: {port}')
           PY
           npm run test:e2e
+
+      - name: Preserve verification artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: crm-verification
+          path: |
+            backend/test-results.xml
+            frontend/test-results/
+          retention-days: 7

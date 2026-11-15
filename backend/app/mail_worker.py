@@ -1,6 +1,7 @@
 """Deliver auth invitations/reset links from durable per-tenant outboxes.
 
-Run as crm_mail only. No FCM/month-end jobs are claimed in Phase 2.
+Auth delivery uses crm_mail. When configured, a separate operations connection
+runs reminders and monthly reports. No FCM transport is configured.
 """
 
 import argparse
@@ -111,6 +112,11 @@ if __name__ == "__main__":
     mail_engine = create_engine(os.environ["MAIL_DATABASE_URL"], pool_pre_ping=True)
     while True:
         tick(mail_engine)
+        if settings().operations_database_url:
+            from .db import engine
+            from .operations_worker import tick_operations
+
+            tick_operations(mail_engine, engine("operations"))
         if args.once:
             break
         time.sleep(10)

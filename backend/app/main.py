@@ -14,6 +14,8 @@ def create_app(platform=False):
     @asynccontextmanager
     async def lifespan(app):
         verify_runtime_role("control" if platform else "tenant")
+        if not platform and settings().operations_database_url:
+            verify_runtime_role("operations")
         yield
 
     if not platform and len(settings().jwt_secret) < 48:
@@ -73,4 +75,8 @@ def create_app(platform=False):
 
         app.include_router(auth)
         app.include_router(tenant)
+        from . import workforce, service_tickets, crm, reporting, privacy
+
+        for module in (workforce, service_tickets, crm, reporting, privacy):
+            app.include_router(module.router)
     return app

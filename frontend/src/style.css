@@ -524,3 +524,106 @@ summary {
     flex-direction: column;
   }
 }
+.workflow-body {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+.work-card {
+  display: block;
+  padding: 18px;
+  margin: 14px 0;
+  border: 1px solid #dbe4e4;
+  border-radius: 10px;
+  background: #f7faf9;
+  overflow-wrap: anywhere;
+}
+.ticket-card {
+  width: 100%;
+  text-align: left;
+  color: #183642;
+  background: #fff;
+}
+.ticket-card span {
+  display: block;
+  margin-top: 8px;
+}
+.employee-app {
+  max-width: 720px;
+  margin: auto;
+  padding-bottom: 100px;
+}
+.mobile-content {
+  padding: 16px;
+}
+.shift-status {
+  position: sticky;
+  top: 0;
+  background: #f2f5f5;
+  z-index: 10;
+  padding: 16px 0;
+  margin-bottom: 16px;
+}
+.shift-status p {
+  margin: 4px 0;
+}
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  background: #122f3a;
+  padding: 8px 4px max(8px, env(safe-area-inset-bottom));
+  z-index: 15;
+}
+.bottom-nav .nav {
+  font-size: 12px;
+  padding: 10px 4px;
+  text-align: center;
+  margin: 0;
+  color: white;
+}
+.modal-scrim {
+  position: fixed;
+  inset: 0;
+  background: #102b38bb;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.disclosure {
+  max-width: 480px;
+  background: white;
+  padding: 28px;
+  border-radius: 16px;
+  max-height: 95vh;
+  overflow: auto;
+}
+.disclosure button {
+  margin: 8px 8px 0 0;
+}
+.actions {
+  flex-wrap: wrap;
+}
+@media (max-width: 767px) {
+  .operations .sidebar nav {
+    flex-wrap: wrap;
+  }
+  .operations .sidebar nav button {
+    width: auto;
+  }
+  .panel {
+    overflow-wrap: anywhere;
+  }
+  .shift-status {
+    top: 0;
+  }
+  .metrics strong {
+    font-size: 28px;
+  }
+}

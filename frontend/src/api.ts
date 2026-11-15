@@ -59,6 +59,7 @@ export async function logout(mode: Mode) {
       false,
     );
   } finally {
+    sessionStorage.removeItem("telite-installation");
     clearAccess();
   }
 }
@@ -83,6 +84,12 @@ export async function call(
     return call(path, options, mode, false);
   }
   if (response.status === 204) return null;
+  if (
+    response.ok &&
+    (response.headers.get("content-type")?.includes("application/pdf") ||
+      response.headers.get("content-type")?.includes("text/csv"))
+  )
+    return response.blob();
   const body = await response.json().catch(() => ({}));
   if (!response.ok) {
     const code = body.error?.code || "REQUEST_FAILED";

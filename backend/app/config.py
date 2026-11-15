@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     app_env: str = "development"
     database_url: str
     control_database_url: str = ""
+    operations_database_url: str = ""
     jwt_secret: str = ""
     platform_jwt_secret: str = ""
     field_encryption_key: str

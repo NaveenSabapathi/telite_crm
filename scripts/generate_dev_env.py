@@ -14,6 +14,7 @@ values = {
     'PLATFORM_JWT_SECRET': secrets.token_urlsafe(64),
     'FIELD_ENCRYPTION_KEY': base64.urlsafe_b64encode(os.urandom(32)).decode(),
     'POSTGRES_PASSWORD': secrets.token_urlsafe(36),
+    'OPERATIONS_DB_PASSWORD': secrets.token_urlsafe(36),
     'API_DB_PASSWORD': secrets.token_urlsafe(36),
     'CONTROL_DB_PASSWORD': secrets.token_urlsafe(36),
     'MAIL_DB_PASSWORD': secrets.token_urlsafe(36),
