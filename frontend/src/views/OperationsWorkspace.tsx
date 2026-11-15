@@ -23,6 +23,8 @@ export function OperationsWorkspace({ profile, onAdmin, onLogout }: any) {
     setError("");
     try {
       await fn();
+      if (profile.features.attendance_gps)
+        setShift(await get("/attendance/status"));
     } catch (e) {
       setError((e as Error).message);
     } finally {

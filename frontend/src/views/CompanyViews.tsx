@@ -56,6 +56,62 @@ export function CompanyViews({
                         </span>
                       </td>
                       <td>
+                        <details>
+                          <summary>Edit employee details</summary>
+                          <form
+                            onSubmit={(e) => {
+                              e.preventDefault();
+                              const f = new FormData(e.currentTarget);
+                              void work(async () => {
+                                await call(
+                                  `/api/v1/users/${u.id}`,
+                                  {
+                                    method: "PATCH",
+                                    headers: { "If-Match": String(u.version) },
+                                    body: JSON.stringify({
+                                      display_name: f.get("display_name"),
+                                      role: u.role,
+                                      active: u.active,
+                                      work_mode: f.get("work_mode"),
+                                      reason: f.get("reason"),
+                                    }),
+                                  },
+                                  mode,
+                                );
+                                await load();
+                                setNotice(
+                                  "Employee details updated. Existing sessions were revoked.",
+                                );
+                              });
+                            }}
+                          >
+                            <Field
+                              label="Employee display name"
+                              name="display_name"
+                              defaultValue={u.display_name}
+                              required
+                            />
+                            <label className="field">
+                              Employee work mode
+                              <select
+                                name="work_mode"
+                                defaultValue={u.work_mode}
+                              >
+                                <option>OFFICE</option>
+                                <option>FIELD</option>
+                              </select>
+                            </label>
+                            <Field
+                              label="Employee change reason"
+                              name="reason"
+                              minLength={5}
+                              required
+                            />
+                            <button disabled={busy}>
+                              Save employee details
+                            </button>
+                          </form>
+                        </details>
                         {u.active && u.must_reset_password && (
                           <button
                             className="ghost"
@@ -173,8 +229,7 @@ export function CompanyViews({
             <div className="empty">
               <h3>Welcome, {profile?.user.display_name}</h3>
               <p>
-                Your account is active. Attendance, tickets and sales screens
-                arrive in Phase 3.
+                Your account is active. Open the operations workspace to view your enabled work modules.
               </p>
             </div>
           )}

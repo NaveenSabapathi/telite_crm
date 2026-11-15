@@ -142,11 +142,15 @@ def revoke(sid: UUID, request: Request, db=Depends(tenant_identity)):
     run(db, "UPDATE app.auth_sessions SET revoked_at=now() WHERE family_id=:id", id=row["family_id"])
 
 
-# Real guard endpoints expose eligibility only; future module routers reuse feature().
-# They do not claim that Phase 3/4 module business workflows exist.
+# Capability metadata reflects implemented modules; optional future modules remain unavailable.
 def capability_route(name):
     def eligibility(db=Depends(feature(name))):
-        return {"feature": name, "enabled": True, "workflow_available": False}
+        return {
+            "feature": name,
+            "enabled": True,
+            "workflow_available": name
+            in ("attendance_gps", "field_service_tickets", "sales_crm", "monthly_email_reports"),
+        }
 
     return eligibility
 

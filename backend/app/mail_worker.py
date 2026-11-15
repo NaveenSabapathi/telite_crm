@@ -1,6 +1,7 @@
 """Deliver auth invitations/reset links from durable per-tenant outboxes.
 
-Run as crm_mail only. No FCM/month-end jobs are claimed in Phase 2.
+Auth delivery uses crm_mail. When configured, a separate operations connection
+runs reminders and monthly reports. No FCM transport is configured.
 """
 
 import argparse

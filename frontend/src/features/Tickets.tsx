@@ -392,11 +392,13 @@ export function Tickets({ profile, run, locate }: any) {
                     required
                     onChange={(e) => {
                       const file = e.target.files?.[0];
+                      setPhoto("");
                       if (file)
                         void run(async () => setPhoto(await imageData(file)));
                     }}
                   />
                 </label>
+                {photo && <p role="status">Completion photo ready</p>}
                 <Signature onChange={setSignature} />
                 <Field
                   label="Customer signer name"

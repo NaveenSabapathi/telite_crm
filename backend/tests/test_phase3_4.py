@@ -201,6 +201,22 @@ def test_ticket_full_assigned_gps_signature_workflow(system):
     metrics = api.get("/api/v1/dashboard", headers=bearer(auth))
     assert metrics.status_code == 200, metrics.text
     assert metrics.json()["service"]["verified_revenue"] == 0
+    payment = api.get(f"/api/v1/tickets/{ticket}/payments", headers=bearer(auth)).json()["data"][0]
+    assert (
+        post(
+            api,
+            engineer,
+            f"/payments/{payment['id']}/verify",
+            {"reason": "Bank reference verified"},
+            payment["version"],
+        ).status_code
+        == 403
+    )
+    verified = post(
+        api, auth, f"/payments/{payment['id']}/verify", {"reason": "Bank reference verified"}, payment["version"]
+    )
+    assert verified.status_code == 200, verified.text
+    assert api.get("/api/v1/dashboard", headers=bearer(auth)).json()["service"]["verified_revenue"] == 500
 
 
 def test_ticket_foreign_assignment_and_idempotency(system):
@@ -418,3 +434,87 @@ def test_month_dst_and_haversine():
     assert missing.astimezone(z).hour == 3
     assert safe_cell('=HYPERLINK("bad")').startswith("'")
     assert safe_cell(" @SUM(1)").startswith("'")
+
+
+def test_monthly_schedule_optin_catchup_and_inbox_deduplication(system, monkeypatch):
+    tid, auth = create_tenant(system)
+    api = system["api"]
+    enable_reports(system, tid)
+    assert api.put("/api/v1/report-settings", json={"email_enabled": True}, headers=bearer(auth)).status_code == 200
+    clock = datetime.now(ZoneInfo("Asia/Kolkata")).replace(hour=12, minute=0, second=0, microsecond=0)
+    monkeypatch.setattr("app.operations_worker.now", lambda: clock)
+    with system["owner"].begin() as db:
+        db.execute(text("UPDATE control.tenants SET created_at=now()-interval '6 months' WHERE id=:id"), {"id": tid})
+        db.execute(
+            text(
+                "UPDATE app.shifts SET start_local='00:00',end_local='23:59',weekdays=ARRAY[1,2,3,4,5,6,7]::smallint[] WHERE tenant_id=:id"
+            ),
+            {"id": tid},
+        )
+    from app.operations_worker import tick_operations
+
+    mail = create_engine(os.environ["MAIL_DATABASE_URL"])
+    ops = create_engine(os.environ["OPERATIONS_DATABASE_URL"])
+    captured = []
+    # Uses actual clock: the assertion is about bounded/deduped jobs, not a fixed month.
+    tick_operations(mail, ops, lambda email, r: captured.append(str(r["id"])))
+    tick_operations(mail, ops, lambda email, r: captured.append(str(r["id"])))
+    tick_operations(mail, ops, lambda email, r: captured.append(str(r["id"])))
+    with tenant_db(tid, "operations") as db:
+        assert one(db, "SELECT count(*) AS n FROM app.report_runs WHERE kind='SCHEDULED'")["n"] == 3
+        assert one(db, "SELECT count(*) AS n FROM app.notifications WHERE kind='SHIFT_LATE'")["n"] == 1
+    assert len(set(captured)) == 3
+    assert tick_operations(mail, ops, lambda *args: captured.append("duplicate")) == 0
+    mail.dispose()
+    ops.dispose()
+
+
+def test_foreign_lead_leave_branch_report_and_privileged_fields(system):
+    a, aa = create_tenant(system)
+    b, bb = create_tenant(system, "beta-company")
+    api = system["api"]
+    lead = post(api, bb, "/leads", lead_body()).json()
+    assert api.get("/api/v1/leads/" + lead["id"], headers=bearer(aa)).status_code == 404
+    assert (
+        post(
+            api,
+            aa,
+            f"/leads/{lead['id']}/stage",
+            {"stage": "WON", "reason": "Attempt cross tenant", "won_value": "5"},
+            1,
+        ).status_code
+        == 404
+    )
+    branch = api.get("/api/v1/branches", headers=bearer(bb)).json()["data"][0]["id"]
+    assert (
+        api.patch(
+            "/api/v1/branches/" + branch,
+            json={"name": "Foreign", "address": "Office", "lat": 0, "lng": 0},
+            headers={**bearer(aa), "If-Match": "1"},
+        ).status_code
+        == 404
+    )
+    body = ticket_body()
+    body["tenant_id"] = b
+    assert post(api, aa, "/tickets", body).status_code == 422
+    body = lead_body()
+    body["stage"] = "WON"
+    assert post(api, aa, "/leads", body).status_code == 422
+    assert api.post("/api/v1/tickets", json=ticket_body(), headers=bearer(aa)).status_code == 428
+
+
+def test_operations_role_is_scoped_and_cannot_read_platform_identity(system):
+    from sqlalchemy.exc import DBAPIError
+
+    a, aa = create_tenant(system)
+    b, bb = create_tenant(system, "beta-company")
+    post(system["api"], aa, "/tickets", ticket_body())
+    post(system["api"], bb, "/tickets", ticket_body())
+    for tid in (a, b, a, b):
+        with tenant_db(tid, "operations") as db:
+            assert one(db, "SELECT count(*) AS n FROM app.tickets")["n"] == 1
+            assert str(one(db, "SELECT tenant_id FROM app.tickets")["tenant_id"]) == tid
+    for table in ["control.tenants", "control.platform_admins", "control.platform_sessions"]:
+        with pytest.raises(DBAPIError):
+            with tenant_db(a, "operations") as db:
+                one(db, "SELECT * FROM " + table)

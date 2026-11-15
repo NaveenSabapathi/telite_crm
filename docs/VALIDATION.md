@@ -1,6 +1,17 @@
 # Validation status
 
-Updated 14 November 2026 for Phase 2.
+Updated 15 November 2026. The Phase 2 evidence below is preserved; continuation evidence is listed first.
+
+## Continuation validation
+
+- Mandatory onboarding completed at base commit `0a33fda`; all 24 unchanged backend tests passed before code changes.
+- Applied migration `0003_phase3_operations` on PostgreSQL 17.11; provisioned the separate restricted operations role.
+- The original 24 tests and the initial 14 new tests passed together (38 total). The expanded 17-test operational suite also passed, including scheduled reports, inbox deduplication, payment reconciliation and cross-tenant operations-role checks.
+- Python lint/format and React/TypeScript production build passed.
+- Browser suites are being verified through the repository CI; local Chromium launch is blocked by Unix-socket restrictions in the authoring environment.
+- No external SMTP email, deployment, Android release build or Play publication was performed. Signature acceptance is implemented; SMS OTP is not configured. Read [implementation limits](PHASE3_4_API.md).
+
+## Historical Phase 2 validation
 
 ## Executed locally
 
@@ -16,7 +27,7 @@ SMTP tests use a captured sender function and synthetic accounts. No external ma
 
 A Playwright integration workflow covers platform MFA login, company provisioning, feature changes, responsive viewport checks, accepting an admin invitation, company login, employee invitations and audit activity. Local browser launch was blocked by the workspace's Chromium Unix-socket restrictions. The same test subsequently **passed on GitHub Actions**, including desktop/mobile viewport checks. [Successful verification run](https://github.com/NaveenSabapathi/telite_crm/actions/runs/43601188661) on implementation commit `babc97674cf1d5ffe0c1911af9aa70baa1b96332`: 24 PostgreSQL integration tests, frontend production build, and 1 complete browser workflow passed. The following documentation-only update records that evidence.
 
-Docker was unavailable in the authoring workspace, so the Compose image build/start was not executed locally. The APIs, SQL migrations, role provisioning and frontend build were exercised directly. TLS, real SMTP deliverability, Android builds, load targets, backup/restore drills and all Phase 3–5 business workflows remain unverified/unimplemented.
+Docker was unavailable in the authoring workspace, so the Compose image build/start was not executed locally. The APIs, SQL migrations, role provisioning and frontend build were exercised directly. TLS, real SMTP deliverability, Android builds, load targets, backup/restore drills and Phase 3–5 workflows were unimplemented at that historical Phase 2 checkpoint; see continuation evidence above.
 
 ## Reproduce
 

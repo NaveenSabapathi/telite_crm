@@ -64,4 +64,4 @@ The bootstrap command prompts for a password and authenticator enrollment. No de
 | [Android release plan](PLAYSTORE_DEPLOY.md) | Future Capacitor, permissions, signing and Play requirements |
 | [Sources](docs/SOURCES.md) | Primary technical/policy references |
 
-Phase 1 files remain the design baseline. Phase 2 uses bounded offset pagination and independent HS256 keys configured through environment variables; signed cursors/asymmetric signing configuration from the target design is not implemented. Browser native integration, policy/deletion UI, FCM, Redis/Celery and monthly reporting are not advertised as working Phase 2 features.
+Phase 1 files remain the design baseline. Phase 2 uses bounded offset pagination and independent HS256 keys configured through environment variables; signed cursors/asymmetric signing configuration from the target design is not implemented. The continuation adds foreground disclosure, deletion requests and monthly reporting; native integration, completed erasure, FCM and Redis/Celery remain outside the implemented web workflows.

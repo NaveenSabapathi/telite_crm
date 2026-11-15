@@ -75,10 +75,11 @@ test("mobile attendance disclosure, geolocation, assigned ticket closure and pro
       name: "after.png",
       mimeType: "image/png",
       buffer: Buffer.from(
-        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aFOsAAAAASUVORK5CYII=",
+        "iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAAAKUlEQVR4nO3NMQEAAAjDMMC/52ECvlRA00nqs3m9AwAAAAAAAAAAgMMWx/EDPS4YA2MAAAAASUVORK5CYII=",
         "base64",
       ),
     });
+  await expect(page.getByText("Completion photo ready", { exact: true })).toBeVisible();
   const pad = page.getByLabel("Customer signature pad");
   await pad.scrollIntoViewIfNeeded();
   const box = (await pad.boundingBox())!;

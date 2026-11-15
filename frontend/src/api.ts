@@ -59,6 +59,7 @@ export async function logout(mode: Mode) {
       false,
     );
   } finally {
+    sessionStorage.removeItem("telite-installation");
     clearAccess();
   }
 }
