@@ -100,3 +100,47 @@ jobs:
             backend/test-results.xml
             frontend/test-results/
           retention-days: 7
+
+  production-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Check shell and production environment generator
+        run: |
+          bash -n scripts/production/deploy.sh scripts/production/backup.sh scripts/production/ssh-entrypoint.sh
+          python -m py_compile scripts/production/generate_env.py scripts/production/smoke_env.py
+      - name: Build exact local release images
+        env:
+          RELEASE_SHA: ${{ github.sha }}
+        run: |
+          docker build -f infra/backend.Dockerfile -t "ghcr.io/naveensabapathi/telite_crm-backend:sha-$RELEASE_SHA" .
+          docker build -f infra/frontend.Dockerfile -t "ghcr.io/naveensabapathi/telite_crm-web:sha-$RELEASE_SHA" .
+          docker pull postgres:17-alpine
+          PG_IMAGE=$(docker image inspect postgres:17-alpine --format '{{index .RepoDigests 0}}')
+          python scripts/production/smoke_env.py "$PG_IMAGE" "$RELEASE_SHA" /tmp/crm-smoke.env
+      - name: Migrate and start standalone production stack
+        run: |
+          set -euo pipefail
+          crm() { docker compose -p telitecrm --env-file /tmp/crm-smoke.env -f infra/production/compose.yaml "$@"; }
+          crm config --quiet
+          crm up -d --wait --wait-timeout 120 db
+          crm --profile tools run --rm --no-deps migrate
+          crm up -d --wait --wait-timeout 180 api control auth-mail web
+          curl --fail --silent --show-error -H 'Host: crm.example.com' http://127.0.0.1:18080/ >/dev/null
+          for endpoint in /api/v1/me /api/v1/platform/me; do
+            code=$(curl --silent --show-error -o /dev/null -w '%{http_code}' -H 'Host: crm.example.com' "http://127.0.0.1:18080$endpoint")
+            [[ "$code" == 401 ]]
+          done
+          crm exec -T db pg_dump -U migrator -d telite -Fc > /tmp/crm-smoke.dump
+          crm exec -T db pg_restore --list < /tmp/crm-smoke.dump >/dev/null
+      - name: Clean up disposable CI project
+        if: always()
+        run: |
+          if [ -f /tmp/crm-smoke.env ]; then
+            docker compose -p telitecrm --env-file /tmp/crm-smoke.env -f infra/production/compose.yaml down -v
+            rm -f /tmp/crm-smoke.env /tmp/crm-smoke.dump
+          fi

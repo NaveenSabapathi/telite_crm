@@ -1,0 +1,6 @@
+[Unit]
+Description=Back up only the Telite CRM PostgreSQL database
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/telite-crm-backup
+UMask=0077

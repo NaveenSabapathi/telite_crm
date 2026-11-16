@@ -1,0 +1,7 @@
+# Replace CRM_DOMAIN with the exact hostname. Keep all existing site files.
+server {
+    listen 80;
+    server_name CRM_DOMAIN;
+    location /.well-known/acme-challenge/ { root /var/www/telite-crm-acme; }
+    location / { return 301 https://$host$request_uri; }
+}
